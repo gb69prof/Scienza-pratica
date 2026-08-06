@@ -26,12 +26,13 @@
   </section>
   <section class="stage-shell" aria-label="Scena scientifica tridimensionale">
     <div class="stage-head"><span id="stageLabel">SCENA 3D · PERCEZIONE</span><span class="drag-hint">Trascina per ruotare · gesto limitato</span></div>
-    <div class="stage"><canvas id="gl" aria-label="Visualizzazione tridimensionale interattiva"></canvas><div class="fallback" id="fallback" hidden><strong>WebGL non disponibile.</strong><span>L'esperimento resta navigabile, ma il dispositivo non può mostrare la scena 3D.</span></div><div class="hud" id="hud" aria-live="polite"></div></div>
+    <div class="stage"><canvas id="gl" aria-label="Visualizzazione tridimensionale interattiva"></canvas><div class="fallback" id="fallback" hidden><strong>Inizializzazione 3D non riuscita.</strong><span>Il percorso resta navigabile. Se il problema persiste, qui comparirà il dettaglio tecnico utile alla diagnosi.</span></div><div class="hud" id="hud" aria-live="polite"></div></div>
     <div class="controls" id="controls"></div>
   </section>
 </main>
 <footer class="nav"><button id="prev" class="navbtn prev" type="button"><span class="arrow">←</span><span><small>Indietro</small><strong id="prevName">—</strong></span></button><div class="dots" id="dots" aria-label="Vai a una fase"></div><button id="next" class="navbtn next" type="button"><span><small>Avanti</small><strong id="nextName">La mela</strong></span><span class="arrow">→</span></button></footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="./compat.js"></script>
 <script type="module" src="./app.js"></script>
 </body>
 </html>
