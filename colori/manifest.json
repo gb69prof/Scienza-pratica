@@ -1,0 +1,16 @@
+{
+  "name": "Colori — Il mondo prima dello sguardo",
+  "short_name": "Colori",
+  "description": "Esperimento interattivo sulla luce, l'occhio e la costruzione percettiva del colore.",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07121f",
+  "theme_color": "#07121f",
+  "icons": [
+    { "src": "./assets/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "./assets/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
