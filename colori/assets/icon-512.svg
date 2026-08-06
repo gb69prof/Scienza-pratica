@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Icona Colori">
+  <rect width="512" height="512" rx="112" fill="#07121f"/>
+  <g transform="translate(256 256)">
+    <path d="M0-176A176 176 0 0 1 152-88L67-40A78 78 0 0 0 0-78Z" fill="#ff4f87"/>
+    <path d="M152-88A176 176 0 0 1 152 88L67 40A78 78 0 0 0 67-40Z" fill="#ffbe3d"/>
+    <path d="M152 88A176 176 0 0 1 0 176V78A78 78 0 0 0 67 40Z" fill="#4fe08d"/>
+    <path d="M0 176A176 176 0 0 1-152 88L-67 40A78 78 0 0 0 0 78Z" fill="#00b8d9"/>
+    <path d="M-152 88A176 176 0 0 1-152-88L-67-40A78 78 0 0 0-67 40Z" fill="#5662ff"/>
+    <path d="M-152-88A176 176 0 0 1 0-176V-78A78 78 0 0 0-67-40Z" fill="#c14cff"/>
+    <circle r="56" fill="#f3fbff"/><circle r="24" fill="#07121f"/>
+  </g>
+</svg>
