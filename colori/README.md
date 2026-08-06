@@ -1,42 +1,42 @@
 # Colori — Il mondo prima dello sguardo
 
-PWA didattica autonoma dedicata alla luce, alla fisiologia della visione e alla costruzione percettiva del colore.
+PWA didattica interattiva sulla natura fisica della luce e sulla costruzione percettiva del colore.
 
-## Percorso
+## Nuova struttura
 
-1. Il mondo senza osservatore: oggetti, luce riflessa e risposta intuitiva.
-2. La luce: spettro, lunghezza d’onda, frequenza, energia e laboratorio RGB.
-3. L’occhio: percorso ottico, retina e risposte relative dei coni S, M e L.
-4. Il cervello: segnali nervosi, costanza cromatica e illusioni contestuali.
-5. Cambia osservatore: simulazioni informate per essere umano, cane, ape, uccello e serpente.
-6. Esperimento finale: scomposizione progressiva dall’esperienza alla descrizione fisica.
-7. Approfondimento filosofico e verifica automatica di dieci domande.
+L’esperimento è organizzato come un percorso di **otto pagine autonome**. In ogni momento è visibile una sola fase; la navigazione avviene con i pulsanti **Indietro** e **Avanti**, con gli indicatori inferiori oppure con i tasti freccia.
 
-## Avvio
+1. Prologo: il colore sembra appartenere agli oggetti
+2. Oggetto e riflettanza
+3. Luce e spettro elettromagnetico
+4. Sintesi additiva RGB
+5. Occhio e coni S/M/L
+6. Elaborazione cerebrale e contesto
+7. Sistemi visivi differenti
+8. Scomposizione finale dell’esperienza
 
-Aprire `index.html` oppure pubblicare la cartella tramite GitHub Pages. Non sono richiesti framework, backend, API o dipendenze esterne.
+## Identità visiva
 
-URL previsto dopo la pubblicazione:
+La seconda versione usa un linguaggio grafico adulto e professionale:
 
-`https://gb69prof.github.io/Scienza-pratica/colori/`
+- interfaccia ispirata a un laboratorio e a un museo scientifico;
+- palette scura, neutra e controllata;
+- tipografia editoriale;
+- visualizzazioni realistiche stilizzate tramite CSS, SVG e Canvas;
+- assenza di emoji, illustrazioni infantili e colori decorativi gratuiti;
+- una sola esperienza visiva per pagina, adatta a LIM, iPad e desktop.
 
-## PWA e offline
+## Accuratezza scientifica
 
-Il service worker usa esclusivamente percorsi relativi compatibili con la sottocartella `colori`. Dopo il primo caricamento la struttura essenziale è disponibile offline.
+La PWA non afferma che i colori siano semplicemente falsi. Distingue tra proprietà fisiche della luce e delle superfici, risposta dei fotorecettori, elaborazione neurale, contesto ed esperienza cosciente.
 
-## Accessibilità
+Le simulazioni delle visioni animali sono esplicitamente approssimazioni didattiche e non fotografie dell’esperienza soggettiva di altre specie.
 
-- navigazione da tastiera;
-- testi alternativi e descrizioni SVG;
-- modalità alto contrasto;
-- riduzione delle animazioni;
-- dati ed etichette non affidati soltanto al colore;
-- simulazioni didattiche di alcune discromatopsie.
+## Tecnica
 
-## Precisazioni scientifiche
-
-La PWA non afferma che i colori siano “falsi”. La tesi centrale è:
-
-> Il colore è un’esperienza percettiva costruita dal sistema visivo a partire dalla distribuzione spettrale della luce, dalle proprietà delle superfici e dal contesto.
-
-Le viste animali sono traduzioni didattiche informate dai sistemi recettoriali conosciuti, non fotografie dell’esperienza soggettiva di altre specie.
+- HTML, CSS, SVG, Canvas e JavaScript senza framework
+- nessuna API o dipendenza esterna
+- percorsi relativi compatibili con GitHub Pages
+- manifest e service worker
+- funzionamento offline dopo il primo caricamento
+- modalità alto contrasto e riduzione delle animazioni
