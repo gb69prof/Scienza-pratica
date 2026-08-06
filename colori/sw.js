@@ -1,4 +1,4 @@
-const CACHE='colori-3d-v4';
+const CACHE='colori-3d-v5';
 const SHELL=['./','./index.html','./style.css','./compat.js','./app.js','./webgl.js','./manifest.json','./assets/icon-192.svg','./assets/icon-512.svg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
