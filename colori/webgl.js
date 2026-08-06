@@ -1,13 +1,261 @@
-const VERT=`attribute vec3 aPosition;attribute vec3 aNormal;uniform mat4 uModel;uniform mat4 uViewProj;varying vec3 vNormal;varying vec3 vWorld;void main(){vec4 w=uModel*vec4(aPosition,1.0);vWorld=w.xyz;vNormal=mat3(uModel)*aNormal;gl_Position=uViewProj*w;}`;
-const FRAG=`precision highp float;varying vec3 vNormal;varying vec3 vWorld;uniform vec3 uColor;uniform vec3 uLightDir;uniform vec3 uLightColor;uniform vec3 uEye;uniform float uAlpha;uniform float uRough;void main(){vec3 n=normalize(vNormal);vec3 l=normalize(-uLightDir);float nd=max(dot(n,l),0.0);vec3 v=normalize(uEye-vWorld);vec3 h=normalize(l+v);float spec=pow(max(dot(n,h),0.0),mix(72.0,8.0,uRough))*mix(.55,.08,uRough);vec3 c=uColor*(.16+nd*.84)*uLightColor+spec*uLightColor;gl_FragColor=vec4(c,uAlpha);}`;
-const M={I:()=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]),mul:(a,b)=>{const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){o[c*4+r]=0;for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k]}return o},T:(x,y,z)=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1]),S:(x,y,z)=>new Float32Array([x,0,0,0,0,y,0,0,0,0,z,0,0,0,0,1]),Rx:a=>{const c=Math.cos(a),s=Math.sin(a);return new Float32Array([1,0,0,0,0,c,s,0,0,-s,c,0,0,0,0,1])},Ry:a=>{const c=Math.cos(a),s=Math.sin(a);return new Float32Array([c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1])},Rz:a=>{const c=Math.cos(a),s=Math.sin(a);return new Float32Array([c,s,0,0,-s,c,0,0,0,0,1,0,0,0,0,1])},P:(fov,asp,n,f)=>{const q=1/Math.tan(fov/2),nf=1/(n-f);return new Float32Array([q/asp,0,0,0,0,q,0,0,0,0,(f+n)*nf,-1,0,0,2*f*n*nf,0])},look:(e,t,u=[0,1,0])=>{let zx=e[0]-t[0],zy=e[1]-t[1],zz=e[2]-t[2],zl=Math.hypot(zx,zy,zz);zx/=zl;zy/=zl;zz/=zl;let xx=u[1]*zz-u[2]*zy,xy=u[2]*zx-u[0]*zz,xz=u[0]*zy-u[1]*zx,xl=Math.hypot(xx,xy,xz);xx/=xl;xy/=xl;xz/=xl;let yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;return new Float32Array([xx,yx,zx,0,xy,yy,zy,0,xz,yz,zz,0,-(xx*e[0]+xy*e[1]+xz*e[2]),-(yx*e[0]+yy*e[1]+yz*e[2]),-(zx*e[0]+zy*e[1]+zz*e[2]),1])},compose:(p=[0,0,0],r=[0,0,0],s=[1,1,1])=>M.mul(M.T(...p),M.mul(M.Ry(r[1]),M.mul(M.Rx(r[0]),M.mul(M.Rz(r[2]),M.S(...s)))))};
-const C=hex=>{if(Array.isArray(hex))return hex;hex=hex.replace('#','');return[parseInt(hex.slice(0,2),16)/255,parseInt(hex.slice(2,4),16)/255,parseInt(hex.slice(4,6),16)/255]};
-function sphere(lat=20,lon=28,deform=null){const p=[],n=[],idx=[];for(let y=0;y<=lat;y++){const v=y/lat,ph=v*Math.PI;for(let x=0;x<=lon;x++){const u=x/lon,th=u*Math.PI*2;let sx=Math.sin(ph)*Math.cos(th),sy=Math.cos(ph),sz=Math.sin(ph)*Math.sin(th),k=deform?deform(sx,sy,sz):1;p.push(sx*k,sy,sz*k);n.push(sx,sy,sz)}}for(let y=0;y<lat;y++)for(let x=0;x<lon;x++){const a=y*(lon+1)+x,b=a+lon+1;idx.push(a,b,a+1,b,b+1,a+1)}return{p,n,idx}}
-function cube(){const p=[],n=[],idx=[],faces=[[[ -1,-1,1],[1,-1,1],[1,1,1],[-1,1,1],[0,0,1]],[[1,-1,-1],[-1,-1,-1],[-1,1,-1],[1,1,-1],[0,0,-1]],[[-1,1,1],[1,1,1],[1,1,-1],[-1,1,-1],[0,1,0]],[[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1],[0,-1,0]],[[1,-1,1],[1,-1,-1],[1,1,-1],[1,1,1],[1,0,0]],[[-1,-1,-1],[-1,-1,1],[-1,1,1],[-1,1,-1],[-1,0,0]]];faces.forEach(f=>{const o=p.length/3;f.slice(0,4).forEach(v=>p.push(...v));for(let i=0;i<4;i++)n.push(...f[4]);idx.push(o,o+1,o+2,o,o+2,o+3)});return{p,n,idx}}
-function cylinder(seg=24){const p=[],n=[],idx=[];for(let i=0;i<=seg;i++){const a=i/seg*Math.PI*2,x=Math.cos(a),z=Math.sin(a);p.push(x,-1,z,x,1,z);n.push(x,0,z,x,0,z)}for(let i=0;i<seg;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}return{p,n,idx}}
-function prism(){const p=[-1,-1,-1,1,-1,-1,0,1,-1,-1,-1,1,1,-1,1,0,1,1,-1,-1,-1,0,1,-1,0,1,1,-1,-1,1,1,-1,-1,1,-1,1,0,1,1,0,1,-1,-1,-1,-1,-1,-1,1,1,-1,1,1,-1,-1],n=[];for(let i=0;i<p.length/3;i++)n.push(0,0,1);const idx=[0,1,2,3,5,4,6,7,8,6,8,9,10,11,12,10,12,13,14,15,16,14,16,17];return{p,n,idx}}
-function mesh(gl,d){const o={};o.pos=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.pos);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(d.p),gl.STATIC_DRAW);o.norm=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,o.norm);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(d.n),gl.STATIC_DRAW);o.idx=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.idx);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(d.idx),gl.STATIC_DRAW);o.count=d.idx.length;return o}
-function program(gl){const sh=(t,s)=>{const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x},p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,VERT));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,FRAG));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));return p}
-export function wavelengthColor(w){let r=0,g=0,b=0;if(w<440){r=-(w-440)/60;b=1}else if(w<490){g=(w-440)/50;b=1}else if(w<510){g=1;b=-(w-510)/20}else if(w<580){r=(w-510)/70;g=1}else if(w<645){r=1;g=-(w-645)/65}else r=1;let k=1;if(w<420)k=.3+.7*(w-380)/40;else if(w>645)k=.3+.7*(700-w)/55;return[Math.pow(r*k,.8),Math.pow(g*k,.8),Math.pow(b*k,.8)]}
-export function responses(w){const G=(m,s)=>Math.exp(-.5*Math.pow((w-m)/s,2));return{s:G(445,34),m:G(535,48),l:G(575,58)}}
-export class LabRenderer{constructor(canvas){this.canvas=canvas;this.gl=canvas.getContext('webgl',{antialias:true,alpha:false,powerPreference:'high-performance'});if(!this.gl)throw new Error('WebGL non disponibile');const g=this.gl;this.p=program(g);g.useProgram(this.p);this.aPos=g.getAttribLocation(this.p,'aPosition');this.aNorm=g.getAttribLocation(this.p,'aNormal');this.u={model:g.getUniformLocation(this.p,'uModel'),vp:g.getUniformLocation(this.p,'uViewProj'),color:g.getUniformLocation(this.p,'uColor'),ld:g.getUniformLocation(this.p,'uLightDir'),lc:g.getUniformLocation(this.p,'uLightColor'),eye:g.getUniformLocation(this.p,'uEye'),alpha:g.getUniformLocation(this.p,'uAlpha'),rough:g.getUniformLocation(this.p,'uRough')};this.meshes={sphere:mesh(g,sphere()),apple:mesh(g,sphere(24,32,(x,y,z)=>{let k=1-.11*Math.max(y,0)+.04*Math.sin(Math.atan2(z,x)*2)*(1-y*y);if(y>.76)k-=.15*(y-.76)/.24;return k})),cube:mesh(g,cube()),cyl:mesh(g,cylinder()),prism:mesh(g,prism())};this.mode='world';this.state={analyze:false,wavelength:550,rgb:[255,150,55],eyeWave:560,built:false,context:'day',observer:'human',final:0};this.drag={yaw:0,pitch:0,down:false,x:0,y:0};this.reduced=false;this.running=true;this.bind();this.resize();requestAnimationFrame(t=>this.frame(t))}bind(){const c=this.canvas;c.addEventListener('pointerdown',e=>{this.drag.down=true;this.drag.x=e.clientX;this.drag.y=e.clientY;c.setPointerCapture(e.pointerId)});c.addEventListener('pointermove',e=>{if(!this.drag.down)return;this.drag.yaw=Math.max(-.45,Math.min(.45,this.drag.yaw+(e.clientX-this.drag.x)*.004));this.drag.pitch=Math.max(-.22,Math.min(.22,this.drag.pitch+(e.clientY-this.drag.y)*.003));this.drag.x=e.clientX;this.drag.y=e.clientY});c.addEventListener('pointerup',()=>this.drag.down=false);c.addEventListener('pointercancel',()=>this.drag.down=false);addEventListener('resize',()=>this.resize())}resize(){const d=Math.min(devicePixelRatio||1,1.65),w=Math.max(1,Math.floor(this.canvas.clientWidth*d)),h=Math.max(1,Math.floor(this.canvas.clientHeight*d));if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h}}setMode(m){this.mode=m;this.drag.yaw=0;this.drag.pitch=0}setReduced(v){this.reduced=v}draw(kind,pos,rot,scale,color,alpha=1,rough=.55){const g=this.gl,m=this.meshes[kind],model=M.compose(pos,rot,scale);g.uniformMatrix4fv(this.u.model,false,model);g.uniform3fv(this.u.color,C(color));g.uniform1f(this.u.alpha,alpha);g.uniform1f(this.u.rough,rough);g.bindBuffer(g.ARRAY_BUFFER,m.pos);g.enableVertexAttribArray(this.aPos);g.vertexAttribPointer(this.aPos,3,g.FLOAT,false,0,0);g.bindBuffer(g.ARRAY_BUFFER,m.norm);g.enableVertexAttribArray(this.aNorm);g.vertexAttribPointer(this.aNorm,3,g.FLOAT,false,0,0);g.bindBuffer(g.ELEMENT_ARRAY_BUFFER,m.idx);g.depthMask(alpha>=.98);g.drawElements(g.TRIANGLES,m.count,g.UNSIGNED_SHORT,0);g.depthMask(true)}beam(a,b,w,color,alpha=.35){const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],len=Math.hypot(dx,dy,dz),yaw=-Math.atan2(dz,dx),pitch=Math.atan2(dy,Math.hypot(dx,dz));this.draw('cube',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[0,yaw,pitch],[len/2,w,w],color,alpha,.25)}camera(base=[0,1.2,7],target=[0,0,0],fov=43){const r=Math.hypot(base[0],base[2]),ang=Math.atan2(base[0],base[2])+this.drag.yaw,eye=[Math.sin(ang)*r,base[1]+this.drag.pitch*r*.55,Math.cos(ang)*r],vp=M.mul(M.P(fov*Math.PI/180,this.canvas.width/this.canvas.height,.1,60),M.look(eye,target)),g=this.gl;g.uniformMatrix4fv(this.u.vp,false,vp);g.uniform3fv(this.u.eye,eye);return eye}setup(bg=[.025,.04,.055],light=[.65,-1,.45],lc=[1,.96,.9]){const g=this.gl;g.viewport(0,0,this.canvas.width,this.canvas.height);g.clearColor(...bg,1);g.clear(g.COLOR_BUFFER_BIT|g.DEPTH_BUFFER_BIT);g.enable(g.DEPTH_TEST);g.enable(g.BLEND);g.blendFunc(g.SRC_ALPHA,g.ONE_MINUS_SRC_ALPHA);g.disable(g.CULL_FACE);g.useProgram(this.p);g.uniform3fv(this.u.ld,light);g.uniform3fv(this.u.lc,lc)}apple(pos=[0,0,0],scale=1,color='#8e2430',alpha=1){this.draw('apple',pos,[0,.25,0],[scale*.98,scale,scale*.94],color,alpha,.38);this.draw('cyl',[pos[0]+.06*scale,pos[1]+1.04*scale,pos[2]],[0,0,.12],[.07*scale,.33*scale,.07*scale],'#37261b',alpha,.75);this.draw('sphere',[pos[0]+.34*scale,pos[1]+1.09*scale,pos[2]],[0,0,-.55],[.42*scale,.07*scale,.2*scale],'#35543b',alpha,.75)}sceneWorld(t){this.setup([.25,.34,.39],[.55,-1,.32],[1,.91,.78]);this.camera([1.1,1.35,7.4],[0,.25,0],45);this.draw('cube',[0,-1.55,0],[0,0,0],[5.6,.12,5.8],'#28392d',1,.92);this.draw('cyl',[-2.3,-.4,-1],[0,0,-.02],[.28,1.35,.28],'#493326',1,.88);[[-2.55,.72,-1],[-2,.92,-1],[-2.25,1.35,-1.2]].forEach((p,i)=>this.draw('sphere',p,[0,0,0],[1.05,.82,1],i===2?'#31573a':'#294a34',1,.88));this.apple([1.8,-.55,.35],.9,'#8f2631');for(let i=0;i<8;i++){const x=-1.3+i*.42,z=-.4+(i%3)*.35;this.draw('cyl',[x,-1,z],[0,0,0],[.025,.36,.025],'#355842',1,.9);this.draw('sphere',[x,-.62,z],[0,0,0],[.12,.04,.18],i%2?'#8a3b52':'#d0b77b',1,.7)}this.draw('sphere',[3.3,2.7,-3],[0,0,0],[.5,.5,.5],[1,.88,.63],.95,.55)}sceneApple(t){this.setup([.035,.045,.055],[.72,-1,.4],[1,.93,.86]);this.camera([0,.6,6.2],[0,.2,0],38);this.draw('cube',[0,-1.55,0],[0,0,0],[4,.08,3],'#111820',1,.95);this.apple([0,-.35,0],1.35,'#8e2330');if(this.state.analyze){this.draw('sphere',[-3,1.3,-.4],[0,0,0],[.22,.22,.22],[1,.94,.78],1,.35);this.beam([-2.7,1.25,-.4],[-.8,.3,0],.018,'#f2e8d6',.8);const cols=['#754dd6','#3c6fd2','#3b9fbd','#57a96d','#cab94d','#d6783f','#b03b49'];cols.forEach((c,i)=>this.beam([.75,.25,0],[3.25,1.25-i*.28,.2-i*.08],.012,c,.5+i*.05))}}scenePrism(t){this.setup([.012,.018,.025],[.45,-1,.3],[.9,.97,1]);this.camera([0,.8,7.2],[0,0,0],42);this.draw('cube',[0,-1.65,0],[0,0,0],[5,.06,3.5],'#080c10',1,.98);this.draw('sphere',[-3.2,.1,0],[0,0,0],[.2,.2,.2],[1,.96,.82],1,.3);this.beam([-3,.1,0],[-.85,.1,0],.025,'#f6eddc',.9);this.draw('prism',[0,.05,0],[0,.35,0],[.92,1.15,.92],'#9bc3d2',.28,.12);const cols=['#6944ce','#3567cf','#3294be','#4aa76e','#c4b647','#d7783d','#b53b47'];cols.forEach((c,i)=>this.beam([.5,.1,0],[3.35,.52-i*.17,.1+i*.035],.018,c,.58));const w=this.state.wavelength,iy=(w-380)/320,y=.52-iy*1.02;this.draw('sphere',[3.36,y,.12],[0,0,0],[.09,.09,.09],wavelengthColor(w),1,.22)}sceneRGB(t){this.setup([.005,.008,.012],[.1,-1,.1],[1,1,1]);this.camera([0,1.4,7.5],[0,0,0],44);this.draw('cube',[0,-1.65,0],[0,0,0],[5,.05,3.7],'#06090c',1,.98);this.draw('cube',[0,.1,-2.9],[0,0,0],[2.2,2.2,.05],'#dedbd2',1,.84);const src=[[-2.8,1.5,1.5],[-2.8,-.3,1.5],[2.8,1.5,1.5]],cols=['#ff2222','#22ff55','#3355ff'],vals=this.state.rgb;src.forEach((p,i)=>{this.draw('sphere',p,[0,0,0],[.26,.26,.26],cols[i],.95,.25);this.beam(p,[0,.15,-2.6],.045,cols[i],.12+.48*vals[i]/255)});this.draw('sphere',[0,.15,-2.55],[0,0,0],[.72,.72,.12],vals.map(v=>v/255),1,.55)}sceneEye(t){this.setup([.025,.04,.05],[.55,-1,.35],[.93,.98,1]);this.camera([0,.45,7],[0,.15,0],40);this.draw('sphere',[0,0,0],[0,0,0],[1.85,1.65,1.7],'#b7cbd1',.18,.2);this.draw('sphere',[0,0,1.35],[Math.PI/2,0,0],[.72,.72,.12],'#587f78',.92,.52);this.draw('sphere',[0,0,1.48],[0,0,0],[.28,.28,.08],'#040607',1,.5);this.draw('sphere',[0,0,.62],[0,0,0],[.62,.85,.35],'#d5e0e3',.22,.12);this.draw('sphere',[0,0,-1.25],[0,0,0],[1.55,1.35,.12],'#a56f42',.34,.65);this.draw('cyl',[0,0,-2],[Math.PI/2,0,0],[.28,.65,.28],'#9c734f',1,.7);const rgb=wavelengthColor(this.state.eyeWave);this.beam([0,0,4.2],[0,0,-1.18],.018,rgb,.68);const r=responses(this.state.eyeWave),xs=[-.72,0,.72],cs=['#6270c8','#4c9a72','#b95a63'],vs=[r.s,r.m,r.l];xs.forEach((x,i)=>this.draw('sphere',[x,-.88,-1.25],[0,0,0],[.13,.13,.13],cs[i],.3+.7*vs[i],.4))}sceneNeural(t){this.setup([.012,.02,.027],[.3,-1,.4],[.9,.96,1]);this.camera([0,1.3,8],[0,0,0],44);const pts=[[-3,0,0],[-1.2,.55,0],[.8,-.1,0],[2.8,.7,0]],colors=['#9bb0b8','#9b8364','#a98a60','#c9a46b'];pts.forEach((p,i)=>{this.draw('sphere',p,[0,0,0],[.43,.43,.43],colors[i],1,.48);if(i<pts.length-1)this.beam(p,pts[i+1],.025,'#7a8992',.4)});const q=(t*.00035)%1;for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1],local=q*3-i;if(local>=0&&local<=1){const p=[a[0]+(b[0]-a[0])*local,a[1]+(b[1]-a[1])*local,a[2]+(b[2]-a[2])*local];this.draw('sphere',p,[0,0,0],[.11,.11,.11],'#edcf9c',1,.18)}}if(this.state.built){this.draw('cube',[0,-1.55,-2],[0,0,0],[4,.06,2],'#2c4033',1,.9);this.apple([1.8,-.6,-2],.7,'#8c2430',.9);this.draw('sphere',[-2,1.7,-2],[0,0,0],[1.2,.75,.7],'#31563b',.9,.9)}}sceneContext(t){const map={day:{bg:[.18,.24,.28],light:[.6,-1,.3],lc:[1,.95,.86],apple:'#8e2630'},sunset:{bg:[.24,.12,.08],light:[-.7,-.6,.2],lc:[1,.55,.28],apple:'#8b2e2f'},cold:{bg:[.06,.12,.2],light:[.4,-1,.6],lc:[.58,.72,1],apple:'#8b2634'},shadow:{bg:[.025,.035,.05],light:[.2,-1,.2],lc:[.42,.5,.62],apple:'#802731'}}[this.state.context];this.setup(map.bg,map.light,map.lc);this.camera([0,.7,6.4],[0,.1,0],40);this.draw('cube',[0,-1.55,0],[0,0,0],[4,.07,3],'#171d20',1,.95);this.apple([0,-.35,0],1.35,map.apple);this.draw('cube',[2.25,-.4,.2],[0,.25,0],[.58,.58,.08],'#777777',1,.82)}sceneObserver(t){this.setup([.12,.17,.17],[.55,-1,.35],[1,.94,.88]);this.camera([0,.6,6.5],[0,.1,0],42);this.draw('cube',[0,-1.6,0],[0,0,0],[4,.08,3],'#28382f',1,.92);const o=this.state.observer;let pet='#8b3450',cent='#b89d54',leaf='#355b3d';if(o==='dog'){pet='#81776b';cent='#b6a162';leaf='#526a55'}if(o==='bee'){pet='#6555a7';cent='#d2c64f';leaf='#406457'}if(o==='bird'){pet='#b32365';cent='#d1b94e';leaf='#2f7045'}for(let i=0;i<7;i++){const a=i/7*Math.PI*2,x=Math.cos(a)*.78,y=Math.sin(a)*.78;this.draw('sphere',[x,y+.15,0],[0,0,a],[.62,.34,.18],pet,1,.6)}this.draw('sphere',[0,.15,.1],[0,0,0],[.58,.58,.32],cent,1,.72);this.draw('cyl',[0,-.85,0],[0,0,0],[.08,.68,.08],leaf,1,.9);if(o==='bee')for(let i=0;i<7;i++){const a=i/7*Math.PI*2,x=Math.cos(a)*.55,y=Math.sin(a)*.55;this.draw('sphere',[x,y+.15,.22],[0,0,0],[.16,.08,.03],'#20143b',.9,.9)}}sceneFinal(t){this.setup([.02,.028,.038],[.65,-1,.36],[.95,.95,.92]);this.camera([0,.55,6.5],[0,.1,0],39);const l=this.state.final;if(l<=2){let c='#8e2531';if(l===1)c='#73505a';if(l===2)c='#666666';this.apple([0,-.3,0],1.4,c,1)}if(l===3)for(let y=-5;y<=5;y++)for(let x=-7;x<=7;x++){const d=x*x/49+y*y/25;if(d<1.05)this.draw('sphere',[x*.18,y*.18-.1,0],[0,0,0],[.035,.035,.035],d<.8?'#74b3bd':'#53636b',.75,.6)}if(l===4){const pts=[[-2.8,-.6,0],[-1.4,.8,0],[0,-.4,0],[1.4,.9,0],[2.8,0,0]];pts.forEach((p,i)=>{this.draw('sphere',p,[0,0,0],[.18,.18,.18],'#9e825d',1,.5);if(i<pts.length-1)this.beam(p,pts[i+1],.018,'#b79a70',.55)});const q=(t*.0005)%1;this.draw('sphere',[-2.8+5.6*q,-.05+Math.sin(q*Math.PI*4)*.3,0],[0,0,0],[.09,.09,.09],'#edcf9c',1,.2)}if(l===5){this.draw('prism',[0,.1,0],[0,.4,0],[.8,1,.8],'#9bc3d2',.25,.15);const cols=['#7046d0','#3a68d0','#3b9fbd','#58a86d','#c5b747','#d67a3e','#b23b48'];cols.forEach((c,i)=>this.beam([.45,.1,0],[3.1,.55-i*.16,.1],.014,c,.55));this.beam([-3,.1,0],[-.65,.1,0],.022,'#eee7d8',.8)}}frame(t){if(!this.running)return;this.resize();switch(this.mode){case'world':this.sceneWorld(t);break;case'apple':this.sceneApple(t);break;case'light':this.scenePrism(t);break;case'rgb':this.sceneRGB(t);break;case'eye':this.sceneEye(t);break;case'neural':this.sceneNeural(t);break;case'context':this.sceneContext(t);break;case'observer':this.sceneObserver(t);break;case'final':this.sceneFinal(t)}requestAnimationFrame(x=>this.frame(x))}}
+const VS = `
+attribute vec3 aPosition;
+attribute vec3 aNormal;
+uniform mat4 uMVP;
+varying vec3 vNormal;
+void main(){
+  vNormal = aNormal;
+  gl_Position = uMVP * vec4(aPosition, 1.0);
+}`;
+
+const FS = `
+precision mediump float;
+varying vec3 vNormal;
+uniform vec3 uColor;
+uniform float uAlpha;
+void main(){
+  vec3 n = normalize(vNormal);
+  vec3 l = normalize(vec3(0.45, 0.85, 0.60));
+  float diffuse = max(dot(n,l), 0.0);
+  float light = 0.30 + 0.70 * diffuse;
+  gl_FragColor = vec4(uColor * light, uAlpha);
+}`;
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+function mat4Identity(){return new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);}
+function mat4Mul(a,b){
+  const o=new Float32Array(16);
+  for(let c=0;c<4;c++) for(let r=0;r<4;r++){
+    o[c*4+r]=a[0*4+r]*b[c*4+0]+a[1*4+r]*b[c*4+1]+a[2*4+r]*b[c*4+2]+a[3*4+r]*b[c*4+3];
+  }
+  return o;
+}
+function mat4Translate(x,y,z){const m=mat4Identity();m[12]=x;m[13]=y;m[14]=z;return m;}
+function mat4Scale(x,y,z){const m=mat4Identity();m[0]=x;m[5]=y;m[10]=z;return m;}
+function mat4RotX(a){const c=Math.cos(a),s=Math.sin(a);return new Float32Array([1,0,0,0,0,c,s,0,0,-s,c,0,0,0,0,1]);}
+function mat4RotY(a){const c=Math.cos(a),s=Math.sin(a);return new Float32Array([c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1]);}
+function mat4RotZ(a){const c=Math.cos(a),s=Math.sin(a);return new Float32Array([c,s,0,0,-s,c,0,0,0,0,1,0,0,0,0,1]);}
+function modelMatrix(p=[0,0,0],r=[0,0,0],s=[1,1,1]){
+  return mat4Mul(mat4Translate(p[0],p[1],p[2]),mat4Mul(mat4RotY(r[1]),mat4Mul(mat4RotX(r[0]),mat4Mul(mat4RotZ(r[2]),mat4Scale(s[0],s[1],s[2])))));
+}
+function perspective(fov,aspect,near,far){
+  const f=1/Math.tan(fov/2),nf=1/(near-far),m=new Float32Array(16);
+  m[0]=f/aspect;m[5]=f;m[10]=(far+near)*nf;m[11]=-1;m[14]=2*far*near*nf;
+  return m;
+}
+function lookAt(eye,target,up=[0,1,0]){
+  let zx=eye[0]-target[0],zy=eye[1]-target[1],zz=eye[2]-target[2];
+  let zl=Math.hypot(zx,zy,zz)||1;zx/=zl;zy/=zl;zz/=zl;
+  let xx=up[1]*zz-up[2]*zy,xy=up[2]*zx-up[0]*zz,xz=up[0]*zy-up[1]*zx;
+  let xl=Math.hypot(xx,xy,xz)||1;xx/=xl;xy/=xl;xz/=xl;
+  const yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+  return new Float32Array([
+    xx,yx,zx,0,
+    xy,yy,zy,0,
+    xz,yz,zz,0,
+    -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+    -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+    -(zx*eye[0]+zy*eye[1]+zz*eye[2]),1
+  ]);
+}
+function color(c){
+  if(Array.isArray(c)) return c;
+  const h=c.replace('#','');
+  return [parseInt(h.slice(0,2),16)/255,parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255];
+}
+
+function sphere(lat=18,lon=24,deform){
+  const p=[],n=[],i=[];
+  for(let y=0;y<=lat;y++){
+    const ph=y/lat*Math.PI, sp=Math.sin(ph),cp=Math.cos(ph);
+    for(let x=0;x<=lon;x++){
+      const th=x/lon*Math.PI*2,sx=sp*Math.cos(th),sy=cp,sz=sp*Math.sin(th);
+      const k=deform?deform(sx,sy,sz):1;
+      p.push(sx*k,sy,sz*k);n.push(sx,sy,sz);
+    }
+  }
+  for(let y=0;y<lat;y++) for(let x=0;x<lon;x++){
+    const a=y*(lon+1)+x,b=a+lon+1;i.push(a,b,a+1,b,b+1,a+1);
+  }
+  return {p,n,i};
+}
+function cube(){
+  const p=[],n=[],i=[];
+  const faces=[
+    [[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1],[0,0,1]],
+    [[1,-1,-1],[-1,-1,-1],[-1,1,-1],[1,1,-1],[0,0,-1]],
+    [[-1,1,1],[1,1,1],[1,1,-1],[-1,1,-1],[0,1,0]],
+    [[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1],[0,-1,0]],
+    [[1,-1,1],[1,-1,-1],[1,1,-1],[1,1,1],[1,0,0]],
+    [[-1,-1,-1],[-1,-1,1],[-1,1,1],[-1,1,-1],[-1,0,0]]
+  ];
+  faces.forEach(f=>{const o=p.length/3;for(let k=0;k<4;k++){p.push(...f[k]);n.push(...f[4]);}i.push(o,o+1,o+2,o,o+2,o+3);});
+  return {p,n,i};
+}
+function cylinder(seg=20){
+  const p=[],n=[],i=[];
+  for(let s=0;s<=seg;s++){const a=s/seg*Math.PI*2,x=Math.cos(a),z=Math.sin(a);p.push(x,-1,z,x,1,z);n.push(x,0,z,x,0,z);}
+  for(let s=0;s<seg;s++){const a=s*2;i.push(a,a+1,a+2,a+1,a+3,a+2);}
+  return {p,n,i};
+}
+function triangularPrism(){
+  const p=[-1,-1,1,1,-1,1,0,1,1,-1,-1,-1,0,1,-1,1,-1,-1,-1,-1,1,0,1,1,-1,-1,-1,0,1,-1,0,1,1,1,-1,1,-1,-1,-1,1,-1,-1,1,-1,1,-1,-1,1,1,-1,-1,1,-1,1];
+  const n=[];for(let k=0;k<p.length/3;k++)n.push(0,0,1);
+  const i=[];for(let k=0;k<p.length/9;k++)i.push(k*3,k*3+1,k*3+2);
+  return {p,n,i};
+}
+function makeMesh(gl,d){
+  const m={};
+  m.pb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,m.pb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(d.p),gl.STATIC_DRAW);
+  m.nb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,m.nb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(d.n),gl.STATIC_DRAW);
+  m.ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(d.i),gl.STATIC_DRAW);
+  m.count=d.i.length;return m;
+}
+function compile(gl,type,source){
+  const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error('Shader: '+(gl.getShaderInfoLog(s)||'errore sconosciuto'));
+  return s;
+}
+function makeProgram(gl){
+  const p=gl.createProgram();gl.attachShader(p,compile(gl,gl.VERTEX_SHADER,VS));gl.attachShader(p,compile(gl,gl.FRAGMENT_SHADER,FS));gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error('Programma WebGL: '+(gl.getProgramInfoLog(p)||'link fallito'));
+  return p;
+}
+
+export function wavelengthColor(w){
+  let r=0,g=0,b=0;
+  if(w<440){r=-(w-440)/60;b=1}else if(w<490){g=(w-440)/50;b=1}else if(w<510){g=1;b=-(w-510)/20}else if(w<580){r=(w-510)/70;g=1}else if(w<645){r=1;g=-(w-645)/65}else r=1;
+  let k=1;if(w<420)k=.3+.7*(w-380)/40;else if(w>645)k=.3+.7*(700-w)/55;
+  return [Math.pow(r*k,.8),Math.pow(g*k,.8),Math.pow(b*k,.8)];
+}
+export function responses(w){
+  const G=(m,s)=>Math.exp(-.5*Math.pow((w-m)/s,2));
+  return {s:G(445,34),m:G(535,48),l:G(575,58)};
+}
+
+export class LabRenderer{
+  constructor(canvas){
+    if(!canvas) throw new Error('Canvas 3D non trovato');
+    this.canvas=canvas;
+    const opts={alpha:false,antialias:true,depth:true,stencil:false,preserveDrawingBuffer:false};
+    let gl=null;
+    try{gl=canvas.getContext('webgl',opts);}catch(_e){}
+    if(!gl){try{gl=canvas.getContext('experimental-webgl',opts);}catch(_e){}}
+    if(!gl) throw new Error('Il browser non ha creato un contesto WebGL');
+    this.gl=gl;
+    this.program=makeProgram(gl);gl.useProgram(this.program);
+    this.aPos=gl.getAttribLocation(this.program,'aPosition');
+    this.aNorm=gl.getAttribLocation(this.program,'aNormal');
+    this.uMVP=gl.getUniformLocation(this.program,'uMVP');
+    this.uColor=gl.getUniformLocation(this.program,'uColor');
+    this.uAlpha=gl.getUniformLocation(this.program,'uAlpha');
+    this.mesh={
+      sphere:makeMesh(gl,sphere()),
+      apple:makeMesh(gl,sphere(22,28,(x,y,z)=>{let k=1-.12*Math.max(y,0)+.05*Math.cos(Math.atan2(z,x)*2)*(1-y*y);if(y>.72)k-=.18*(y-.72)/.28;return k;})),
+      cube:makeMesh(gl,cube()),
+      cyl:makeMesh(gl,cylinder()),
+      prism:makeMesh(gl,triangularPrism())
+    };
+    this.mode='world';
+    this.state={analyze:false,wavelength:550,rgb:[255,150,55],eyeWave:560,built:false,context:'day',observer:'human',final:0};
+    this.drag={down:false,x:0,y:0,yaw:0,pitch:0};
+    this.reduced=false;this.contextLost=false;
+    this.bind();this.resize();
+    requestAnimationFrame(t=>this.frame(t));
+  }
+  bind(){
+    const c=this.canvas;
+    c.addEventListener('webglcontextlost',e=>{e.preventDefault();this.contextLost=true;});
+    c.addEventListener('webglcontextrestored',()=>{this.contextLost=false;});
+    c.addEventListener('pointerdown',e=>{this.drag.down=true;this.drag.x=e.clientX;this.drag.y=e.clientY;try{c.setPointerCapture(e.pointerId)}catch(_e){}});
+    c.addEventListener('pointermove',e=>{if(!this.drag.down)return;this.drag.yaw=clamp(this.drag.yaw+(e.clientX-this.drag.x)*.004,-.45,.45);this.drag.pitch=clamp(this.drag.pitch+(e.clientY-this.drag.y)*.003,-.22,.22);this.drag.x=e.clientX;this.drag.y=e.clientY;});
+    const up=()=>{this.drag.down=false;};c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up);c.addEventListener('pointerleave',up);
+    addEventListener('resize',()=>this.resize());
+  }
+  setMode(m){this.mode=m;this.drag.yaw=0;this.drag.pitch=0;}
+  setReduced(v){this.reduced=!!v;}
+  resize(){
+    const d=Math.min(window.devicePixelRatio||1,1.5),r=this.canvas.getBoundingClientRect();
+    const w=Math.max(2,Math.round(r.width*d)),h=Math.max(2,Math.round(r.height*d));
+    if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
+  }
+  view(base=[0,1,7],target=[0,0,0],fov=44){
+    const rad=Math.hypot(base[0],base[2]),ang=Math.atan2(base[0],base[2])+this.drag.yaw;
+    const eye=[Math.sin(ang)*rad,base[1]+this.drag.pitch*rad*.55,Math.cos(ang)*rad];
+    const V=lookAt(eye,target),P=perspective(fov*Math.PI/180,this.canvas.width/this.canvas.height,.1,80);
+    this.vp=mat4Mul(P,V);
+  }
+  clear(rgb=[.025,.035,.045]){
+    const g=this.gl;this.resize();g.viewport(0,0,this.canvas.width,this.canvas.height);g.clearColor(rgb[0],rgb[1],rgb[2],1);g.clear(g.COLOR_BUFFER_BIT|g.DEPTH_BUFFER_BIT);g.enable(g.DEPTH_TEST);g.enable(g.BLEND);g.blendFunc(g.SRC_ALPHA,g.ONE_MINUS_SRC_ALPHA);g.disable(g.CULL_FACE);
+  }
+  draw(kind,p,r,s,c,a=1){
+    const g=this.gl,m=this.mesh[kind],M=modelMatrix(p,r,s),mvp=mat4Mul(this.vp,M);
+    glUse(g,this.program);g.uniformMatrix4fv(this.uMVP,false,mvp);g.uniform3fv(this.uColor,color(c));g.uniform1f(this.uAlpha,a);
+    g.bindBuffer(g.ARRAY_BUFFER,m.pb);g.enableVertexAttribArray(this.aPos);g.vertexAttribPointer(this.aPos,3,g.FLOAT,false,0,0);
+    g.bindBuffer(g.ARRAY_BUFFER,m.nb);g.enableVertexAttribArray(this.aNorm);g.vertexAttribPointer(this.aNorm,3,g.FLOAT,false,0,0);
+    g.bindBuffer(g.ELEMENT_ARRAY_BUFFER,m.ib);g.depthMask(a>.98);g.drawElements(g.TRIANGLES,m.count,g.UNSIGNED_SHORT,0);g.depthMask(true);
+  }
+  beam(a,b,w,c,alpha=.35){
+    const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],len=Math.hypot(dx,dy,dz),yaw=-Math.atan2(dz,dx),pitch=Math.atan2(dy,Math.hypot(dx,dz));
+    this.draw('cube',[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[0,yaw,pitch],[len/2,w,w],c,alpha);
+  }
+  apple(p=[0,0,0],s=1,c='#8d2632',a=1){
+    this.draw('apple',p,[0,.2,0],[s*.98,s,s*.94],c,a);
+    this.draw('cyl',[p[0]+.05*s,p[1]+1.04*s,p[2]],[0,0,.12],[.07*s,.30*s,.07*s],'#39271c',a);
+    this.draw('sphere',[p[0]+.34*s,p[1]+1.08*s,p[2]],[0,0,-.5],[.42*s,.07*s,.18*s],'#36563d',a);
+  }
+  sceneWorld(t){
+    this.clear([.16,.23,.27]);this.view([1.0,1.25,7.4],[0,.15,0],45);
+    this.draw('cube',[0,-1.55,0],[0,0,0],[5.5,.12,5.4],'#29392f');
+    this.draw('cyl',[-2.2,-.35,-1],[0,0,0],[.26,1.25,.26],'#493329');
+    this.draw('sphere',[-2.45,.72,-1],[0,0,0],[1.0,.78,.95],'#31543a');
+    this.draw('sphere',[-1.95,.95,-1],[0,0,0],[.92,.72,.86],'#294a34');
+    this.apple([1.75,-.55,.2],.9,'#912a35');
+    for(let k=0;k<8;k++){const x=-1.3+k*.42,z=-.3+(k%3)*.3;this.draw('cyl',[x,-1.05,z],[0,0,0],[.025,.32,.025],'#355842');this.draw('sphere',[x,-.70,z],[0,0,0],[.10,.04,.15],k%2?'#8b4053':'#c6a96f');}
+    if(!this.reduced){const q=.03*Math.sin(t*.00025);this.drag.yaw+=q*.002;}
+  }
+  sceneApple(){
+    this.clear([.025,.035,.045]);this.view([0,.7,6],[0,.2,0],42);this.apple([0,-.15,0],1.45,this.state.analyze?'#66686a':'#982e39');
+    if(this.state.analyze){this.beam([-4,2,1],[-1,.5,.2],.025,'#efe6cf',.75);this.beam([1,.3,.1],[4,1.4,1],.022,'#c4414d',.65);this.beam([1,.1,.2],[4,.2,-.5],.018,'#bd7848',.45);}
+  }
+  sceneLight(){
+    this.clear([.01,.015,.022]);this.view([.2,.8,7],[0,0,0],43);this.draw('prism',[0,0,0],[0,.15,0],[1.25,1.25,.7],'#8aa8b2',.35);this.beam([-5,0,0],[-1.1,0,0],.03,'#f1ead9',.85);
+    const cols=['#704bcf','#416fd0','#32a4be','#55ad78','#c9b84d','#d17a3f','#b63649'];for(let k=0;k<7;k++)this.beam([1.1,0,0],[5,(k-3)*.42,0],.025,cols[k],.56);
+    const c=wavelengthColor(this.state.wavelength);this.draw('sphere',[3.9,(this.state.wavelength-540)/180,0],[0,0,0],[.12,.12,.12],c,1);
+  }
+  sceneRGB(){
+    this.clear([.008,.012,.016]);this.view([0,1.3,7],[0,0,0],44);this.draw('cube',[0,-1.4,0],[0,0,0],[5,.06,4],'#1b2025');
+    const v=this.state.rgb.map(x=>x/255);const src=[[-3,1.4,-1.4],[-3,-.2,-1.4],[3,1.4,-1.4]],cols=['#ff2222','#22ff55','#2255ff'];
+    src.forEach((p,k)=>{this.draw('cyl',p,[Math.PI/2,0,0],[.22,.35,.22],'#3a4248');this.beam(p,[0,0,.4],.10,cols[k],.10+.42*v[k]);});
+    const mix=[v[0],v[1],v[2]];this.draw('sphere',[0,0,.4],[0,0,0],[1.25,1.25,.18],mix,.95);
+  }
+  sceneEye(){
+    this.clear([.02,.03,.038]);this.view([0,.5,7],[0,0,0],43);
+    this.draw('sphere',[0,0,0],[0,0,0],[2.1,1.65,1.65],'#9eb3ba',.16);this.draw('sphere',[-1.55,0,0],[0,0,0],[.6,1.0,1.0],'#6e8f91',.55);this.draw('sphere',[-1.72,0,0],[0,0,0],[.28,.58,.58],'#050708',1);this.draw('sphere',[-.9,0,0],[0,0,0],[.28,.78,.78],'#c2d0d4',.25);this.draw('cyl',[2.25,0,0],[0,0,Math.PI/2],[.18,.8,.18],'#a7804e');
+    const c=wavelengthColor(this.state.eyeWave);this.beam([-5,0,0],[1.55,0,0],.025,c,.78);const rr=responses(this.state.eyeWave);[['#6c72c9',rr.s,-.55],['#4c9a72',rr.m,0],['#bd5963',rr.l,.55]].forEach(x=>this.draw('sphere',[1.65,x[2],0],[0,0,0],[.08+.18*x[1],.08+.18*x[1],.08+.18*x[1]],x[0],1));
+  }
+  sceneNeural(t){
+    this.clear([.008,.012,.018]);this.view([0,.5,7],[0,0,0],45);const xs=[-3,-1,1,3];for(let k=0;k<4;k++){this.draw('sphere',[xs[k],0,0],[0,0,0],[.45,.45,.45],k===3&&this.state.built?'#8e2d38':'#6b7479');if(k<3)this.beam([xs[k]+.45,0,0],[xs[k+1]-.45,0,0],.025,'#8d7652',.5);}
+    for(let k=0;k<3;k++){const q=((t*.00045+k*.29)%1),x=-2.55+q*5.1;this.draw('sphere',[x,.12,0],[0,0,0],[.08,.08,.08],'#d6bc82');}
+    if(this.state.built)this.apple([3,-.95,0],.6,'#912b36');
+  }
+  sceneContext(){
+    const modes={day:[[.16,.23,.27],'#922d38'],sunset:[[.24,.10,.06],'#a03b2f'],cold:[[.07,.13,.20],'#7b3446'],shadow:[[.025,.035,.05],'#6c2633']]};const m=modes[this.state.context]||modes.day;
+    this.clear(m[0]);this.view([0,.7,6],[0,0,0],42);this.apple([0,-.15,0],1.45,m[1]);this.draw('sphere',[-3.3,2.3,-1],[0,0,0],[.35,.35,.35],this.state.context==='cold'?'#b8d7ff':this.state.context==='sunset'?'#ff9360':'#f0e0b8',.85);
+  }
+  sceneObserver(){
+    this.clear([.08,.12,.12]);this.view([0,.8,6],[0,0,0],43);const obs=this.state.observer;let petal='#8a3452',center='#c3a55f';if(obs==='dog'){petal='#777d63';center='#b5a867'}if(obs==='bee'){petal='#7250a2';center='#d4e65c'}if(obs==='bird'){petal='#b22b72';center='#e1c956'}
+    for(let k=0;k<7;k++){const a=k/7*Math.PI*2;this.draw('sphere',[Math.cos(a)*1.1,Math.sin(a)*1.1,0],[0,0,a],[.55,1.0,.25],petal,.98);}this.draw('sphere',[0,0,.1],[0,0,0],[.65,.65,.35],center,1);if(obs==='bee')for(let k=0;k<7;k++){const a=k/7*Math.PI*2;this.draw('sphere',[Math.cos(a)*.63,Math.sin(a)*.63,.24],[0,0,0],[.15,.15,.06],'#29203d',.85);}
+  }
+  sceneFinal(t){
+    this.clear([.02,.028,.036]);this.view([0,.7,6],[0,.05,0],42);const L=this.state.final;
+    if(L<3){const c=L===0?'#952d38':L===1?'#70484c':'#727272';this.apple([0,-.15,0],1.45,c,1);}else if(L===3){for(let y=-3;y<=3;y++)for(let x=-5;x<=5;x++){const d=x*x/25+y*y/9;if(d<1.1)this.draw('sphere',[x*.25,y*.25,0],[0,0,0],[.045,.045,.045],'#8ec8d1',.35+.45*(1-d));}}else if(L===4){for(let k=0;k<5;k++){const yy=(k-2)*.35;this.beam([-3,yy,0],[3,yy,0],.015,'#a8d4db',.45);for(let q=0;q<5;q++){const x=-2.5+((t*.0006+q*.2+k*.11)%1)*5;this.draw('sphere',[x,yy,0],[0,0,0],[.05,.05,.05],'#d6bc82');}}}else{for(let k=0;k<7;k++){const c=wavelengthColor(390+k*48);this.beam([-3,-1.2+k*.4,0],[3,-1.2+k*.4,0],.018,c,.55);}}
+  }
+  render(t){
+    if(this.contextLost)return;
+    switch(this.mode){case'world':return this.sceneWorld(t);case'apple':return this.sceneApple(t);case'light':return this.sceneLight(t);case'rgb':return this.sceneRGB(t);case'eye':return this.sceneEye(t);case'neural':return this.sceneNeural(t);case'context':return this.sceneContext(t);case'observer':return this.sceneObserver(t);case'final':return this.sceneFinal(t);default:return this.sceneWorld(t);}
+  }
+  frame(t){try{this.render(t);}catch(err){console.error('Errore rendering 3D:',err);return;}requestAnimationFrame(x=>this.frame(x));}
+}
+function glUse(gl,p){gl.useProgram(p);}
