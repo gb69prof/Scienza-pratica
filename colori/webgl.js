@@ -166,8 +166,8 @@ export class LabRenderer{
   }
   bind(){
     const c=this.canvas;
-    c.addEventListener('webglcontextlost',e=>{e.preventDefault();this.contextLost=true;});
-    c.addEventListener('webglcontextrestored',()=>{this.contextLost=false;});
+    c.addEventListener('webglcontextlost',e=>{e.preventDefault();this.contextLost=true;window.ColoriDiagnostics?.showRendererError(new Error('Il contesto WebGL è stato perso. Ricarica la pagina per ripristinare la scena.'));});
+    c.addEventListener('webglcontextrestored',()=>location.reload());
     c.addEventListener('pointerdown',e=>{this.drag.down=true;this.drag.x=e.clientX;this.drag.y=e.clientY;try{c.setPointerCapture(e.pointerId)}catch(_e){}});
     c.addEventListener('pointermove',e=>{if(!this.drag.down)return;this.drag.yaw=clamp(this.drag.yaw+(e.clientX-this.drag.x)*.004,-.45,.45);this.drag.pitch=clamp(this.drag.pitch+(e.clientY-this.drag.y)*.003,-.22,.22);this.drag.x=e.clientX;this.drag.y=e.clientY;});
     const up=()=>{this.drag.down=false;};c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up);c.addEventListener('pointerleave',up);
@@ -241,7 +241,7 @@ export class LabRenderer{
     if(this.state.built)this.apple([3,-.95,0],.6,'#912b36');
   }
   sceneContext(){
-    const modes={day:[[.16,.23,.27],'#922d38'],sunset:[[.24,.10,.06],'#a03b2f'],cold:[[.07,.13,.20],'#7b3446'],shadow:[[.025,.035,.05],'#6c2633']]};const m=modes[this.state.context]||modes.day;
+    const modes={day:[[.16,.23,.27],'#922d38'],sunset:[[.24,.10,.06],'#a03b2f'],cold:[[.07,.13,.20],'#7b3446'],shadow:[[.025,.035,.05],'#6c2633']};const m=modes[this.state.context]||modes.day;
     this.clear(m[0]);this.view([0,.7,6],[0,0,0],42);this.apple([0,-.15,0],1.45,m[1]);this.draw('sphere',[-3.3,2.3,-1],[0,0,0],[.35,.35,.35],this.state.context==='cold'?'#b8d7ff':this.state.context==='sunset'?'#ff9360':'#f0e0b8',.85);
   }
   sceneObserver(){
@@ -256,6 +256,6 @@ export class LabRenderer{
     if(this.contextLost)return;
     switch(this.mode){case'world':return this.sceneWorld(t);case'apple':return this.sceneApple(t);case'light':return this.sceneLight(t);case'rgb':return this.sceneRGB(t);case'eye':return this.sceneEye(t);case'neural':return this.sceneNeural(t);case'context':return this.sceneContext(t);case'observer':return this.sceneObserver(t);case'final':return this.sceneFinal(t);default:return this.sceneWorld(t);}
   }
-  frame(t){try{this.render(t);}catch(err){console.error('Errore rendering 3D:',err);return;}requestAnimationFrame(x=>this.frame(x));}
+  frame(t){try{this.render(t);}catch(err){window.ColoriDiagnostics?.showRendererError(err);return;}requestAnimationFrame(x=>this.frame(x));}
 }
 function glUse(gl,p){gl.useProgram(p);}

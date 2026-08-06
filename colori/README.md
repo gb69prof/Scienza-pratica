@@ -58,6 +58,36 @@ Tutti i percorsi sono relativi e compatibili con GitHub Pages:
 
 `https://gb69prof.github.io/Scienza-pratica/colori/`
 
+La cache corrente è `colori-3d-v6`. Gli asset critici hanno una versione esplicita
+nel loro URL, così un service worker precedente non può continuare a fornire un
+renderer superato dopo un aggiornamento.
+
+Per una diagnosi senza service worker si può aprire:
+
+`?no-sw=1`
+
+Per rimuovere registrazione e cache della sola PWA Colori e riaprire
+automaticamente la pagina senza service worker si può usare:
+
+`?reset-pwa=1`
+
+## Diagnosi del mancato rendering
+
+Il renderer non partiva per un errore di sintassi in `webgl.js`: una parentesi
+quadra in eccesso nella tabella delle illuminazioni impediva al browser di
+analizzare l'intero modulo. Non era un problema di Safari né della creazione del
+contesto WebGL.
+
+Un secondo errore faceva apparire comunque il pannello di fallback: la regola
+CSS `display: grid` prevaleva sull'attributo HTML `hidden`. La regola
+`.fallback[hidden]` ora garantisce che la diagnostica sia visibile soltanto in
+caso di errore reale.
+
+L'avvio passa da `compat.js`, che intercetta anche gli errori di importazione del
+modulo e mostra il dettaglio tecnico. Non modifica più globalmente
+`HTMLCanvasElement.getContext` e non consuma un contesto WebGL di prova prima
+del renderer reale.
+
 ## Limiti scientifici
 
 Le simulazioni di visione animale e i modelli anatomici sono semplificazioni didattiche. Uno schermo RGB non può riprodurre direttamente un canale ultravioletto o l'esperienza cromatica di un sistema tetrocromatico.
